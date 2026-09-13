@@ -1,0 +1,7 @@
+config.py
+known_faces/
+models/
+*.jpg
+*.jpeg
+__pycache__/
+*.pyc
