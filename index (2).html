@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Camera nhà - Cảnh báo</title>
+<style>
+  body { background:#111; color:#eee; font-family: sans-serif; max-width:700px; margin:0 auto; padding:20px; }
+  h1 { font-size: 1.2rem; }
+  img { width: 100%; border-radius: 8px; background:#000; }
+  #time { color:#aaa; font-size:0.85rem; margin-top:6px; }
+  ul { list-style:none; padding:0; }
+  li { border-bottom:1px solid #333; padding:10px 0; }
+  li .type { font-weight:bold; }
+  li .when { color:#888; font-size:0.85rem; }
+  a.nav { color:#6cf; text-decoration:none; font-size:0.9rem; }
+</style>
+</head>
+<body>
+  <h1>📷 Camera nhà - Cảnh báo gần nhất</h1>
+  <p><a class="nav" href="live.html">→ Xem live trực tiếp</a></p>
+
+  <img id="snapshot" src="" alt="Ảnh mới nhất">
+  <div id="time">Đang tải...</div>
+
+  <h2>Lịch sử cảnh báo</h2>
+  <ul id="history"></ul>
+
+<script>
+// Điền 2 giá trị này (giống trong config.py bên điện thoại)
+const SUPABASE_URL = "DIEN_SUPABASE_URL_VAO_DAY";
+const SUPABASE_KEY = "DIEN_SUPABASE_ANON_KEY_VAO_DAY";
+
+async function loadSnapshot() {
+  const img = document.getElementById('snapshot');
+  const time = document.getElementById('time');
+  // Thêm timestamp để trình duyệt không lấy ảnh cũ từ cache
+  img.src = `${SUPABASE_URL}/storage/v1/object/public/snapshots/latest.jpg?t=${Date.now()}`;
+  time.textContent = "Cập nhật lúc: " + new Date().toLocaleTimeString('vi-VN');
+}
+
+async function loadHistory() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/events?select=*&order=created_at.desc&limit=20`, {
+    headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
+  });
+  const events = await res.json();
+  const list = document.getElementById('history');
+  list.innerHTML = '';
+  events.forEach(e => {
+    const li = document.createElement('li');
+    const when = new Date(e.created_at).toLocaleString('vi-VN');
+    li.innerHTML = `<div class="type">${e.type}</div><div class="when">${when}</div>`;
+    list.appendChild(li);
+  });
+}
+
+function refreshAll() {
+  loadSnapshot();
+  loadHistory();
+}
+
+refreshAll();
+setInterval(refreshAll, 5000); // tự làm mới mỗi 5 giây
+</script>
+</body>
+</html>
