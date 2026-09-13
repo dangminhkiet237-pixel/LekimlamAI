@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Camera nhà - Xem trực tiếp</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
+<style>
+  body { background:#111; color:#eee; font-family: sans-serif; text-align:center; margin:0; padding:20px; }
+  h1 { font-size: 1.2rem; }
+  video { width: 100%; max-width: 700px; background:#000; border-radius: 8px; }
+  #status { margin-top: 10px; color: #aaa; font-size: 0.9rem; }
+  input { padding: 8px; width: 80%; max-width: 500px; }
+  button { padding: 8px 16px; }
+</style>
+</head>
+<body>
+  <h1>📷 Camera nhà - Live</h1>
+  <p id="status">Nhập link ngrok của bạn (dạng https://ten-ban.ngrok-free.app) rồi bấm Kết nối</p>
+  <input id="urlInput" type="text" placeholder="https://ten-ban.ngrok-free.app/stream.m3u8">
+  <button onclick="connect()">Kết nối</button>
+  <br><br>
+  <video id="video" controls autoplay muted></video>
+
+<script>
+function connect() {
+  const raw = document.getElementById('urlInput').value.trim();
+  if (!raw) return;
+  const src = raw.endsWith('.m3u8') ? raw : raw.replace(/\/$/, '') + '/stream.m3u8';
+  const video = document.getElementById('video');
+  const status = document.getElementById('status');
+
+  if (Hls.isSupported()) {
+    const hls = new Hls();
+    hls.loadSource(src);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.ERROR, (event, data) => {
+      status.textContent = "Lỗi kết nối: " + data.details + " (kiểm tra lại link ngrok, hoặc script chưa chạy)";
+    });
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      status.textContent = "Đã kết nối, đang phát live";
+      video.play();
+    });
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = src; // Safari hỗ trợ HLS gốc
+    video.play();
+    status.textContent = "Đã kết nối (Safari)";
+  } else {
+    status.textContent = "Trình duyệt này không hỗ trợ xem live HLS";
+  }
+
+  // Lưu lại link để lần sau khỏi gõ lại
+  localStorage.setItem('camera_url', raw);
+}
+
+// Tự điền lại link đã lưu lần trước
+window.onload = () => {
+  const saved = localStorage.getItem('camera_url');
+  if (saved) document.getElementById('urlInput').value = saved;
+};
+</script>
+</body>
+</html>
